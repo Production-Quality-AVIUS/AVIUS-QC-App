@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>AviusULD | Packing QC Inspection</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{
+  --navy-950:#33383C;
+  --navy-800:#3F454A;
+  --navy-700:#4B5257;
+  --navy-100:#ECEFEF;
+  --orange-500:#1FA987;
+  --orange-600:#178B70;
+  --orange-100:#DEF3EE;
+  --slate-50:#F5F6F6;
+  --slate-100:#EBEDED;
+  --slate-200:#DCE0DF;
+  --slate-400:#9AA3A0;
+  --slate-600:#5B6461;
+  --slate-800:#2B302E;
+  --green-500:#1FA987;
+  --green-100:#DEF3EE;
+  --red-500:#D6483F;
+  --red-100:#FBE2E0;
+  --amber-500:#D18A1D;
+  --amber-100:#FBEDD3;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--slate-50);color:var(--slate-800);
+  font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;}
+body{min-height:100vh;}
+h1,h2,h3,h4{font-family:"Segoe UI",-apple-system,sans-serif;font-weight:700;margin:0;letter-spacing:-0.01em;}
+p{margin:0;}
+button{font-family:inherit;cursor:pointer;}
+.hidden{display:none !important;}
+
+/* ---- header ---- */
+.topbar{background:var(--navy-950);color:#fff;padding:14px 22px;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;position:sticky;top:0;z-index:40;}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand-mark{width:34px;height:34px;border-radius:8px;background:var(--orange-500);display:flex;
+  align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex:none;}
+.brand-word{font-size:17px;font-weight:800;letter-spacing:0.01em;}
+.brand-word span{color:var(--orange-500);}
+.brand-sub{font-size:11px;color:#AFC0DA;margin-top:1px;letter-spacing:0.03em;text-transform:uppercase;}
+.role-switch{display:flex;gap:4px;background:rgba(255,255,255,0.08);padding:4px;border-radius:10px;flex-wrap:wrap;}
+.role-btn{border:none;background:transparent;color:#C6D2E4;padding:7px 12px;border-radius:7px;font-size:12.5px;
+  font-weight:600;white-space:nowrap;}
+.role-btn.active{background:var(--orange-500);color:#fff;}
+
+.subbar{background:var(--navy-800);display:flex;gap:2px;padding:0 22px;overflow-x:auto;}
+.tab-btn{border:none;background:transparent;color:#AFC0DA;padding:12px 16px;font-size:13.5px;font-weight:600;
+  border-bottom:3px solid transparent;white-space:nowrap;}
+.tab-btn.active{color:#fff;border-bottom-color:var(--orange-500);}
+
+.wrap{max-width:1080px;margin:0 auto;padding:22px 18px 60px;}
+.view{display:none;}
+.view.active{display:block;}
+
+/* ---- cards / generic ---- */
+.card{background:#fff;border:1px solid var(--slate-200);border-radius:var(--radius);padding:18px 20px;}
+.card + .card{margin-top:14px;}
+.section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;
+  color:var(--slate-600);margin-bottom:10px;}
+.muted{color:var(--slate-600);font-size:13px;}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;
+  border-radius:20px;text-transform:uppercase;letter-spacing:0.02em;}
+.badge-ready{background:var(--slate-100);color:var(--slate-600);}
+.badge-inspecting{background:var(--amber-100);color:var(--amber-500);}
+.badge-submitted{background:var(--navy-100);color:var(--navy-700);}
+.badge-approved{background:var(--green-100);color:var(--green-500);}
+.badge-rejected{background:var(--red-100);color:var(--red-500);}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:8px;
+  padding:11px 18px;font-size:14px;font-weight:700;border:1.5px solid transparent;}
+.btn-primary{background:var(--orange-500);color:#fff;}
+.btn-primary:hover{background:var(--orange-600);}
+.btn-primary:disabled{background:var(--slate-200);color:var(--slate-400);cursor:not-allowed;}
+.btn-outline{background:#fff;color:var(--navy-800);border-color:var(--slate-200);}
+.btn-outline:hover{border-color:var(--navy-700);}
+.btn-danger{background:#fff;color:var(--red-500);border-color:var(--red-100);}
+.btn-danger:hover{background:var(--red-100);}
+.btn-block{width:100%;}
+.btn-sm{padding:7px 12px;font-size:12.5px;}
+
+/* ---- upload ---- */
+.dropzone{border:2px dashed var(--slate-200);border-radius:var(--radius);padding:44px 20px;text-align:center;
+  background:var(--slate-50);cursor:pointer;transition:border-color .15s;}
+.dropzone:hover,.dropzone.drag{border-color:var(--orange-500);background:var(--orange-100);}
+.dropzone .icon{font-size:34px;margin-bottom:10px;}
+.dz-title{font-size:15px;font-weight:700;margin-bottom:4px;}
+
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px;}
+.meta-item{background:var(--slate-50);border-radius:8px;padding:10px 12px;}
+.meta-item .label{font-size:11px;color:var(--slate-600);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px;}
+.meta-item .val{font-size:14px;font-weight:700;}
+
+/* ---- job cards ---- */
+.job-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+.job-card{background:#fff;border:1px solid var(--slate-200);border-radius:var(--radius);padding:16px 18px;
+  cursor:pointer;transition:box-shadow .15s,border-color .15s;}
+.job-card:hover{border-color:var(--navy-700);box-shadow:0 2px 10px rgba(11,27,51,0.08);}
+.job-card .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.job-card h3{font-size:15px;}
+.job-card .sub{font-size:12.5px;color:var(--slate-600);margin-top:2px;}
+.progress-bar{height:7px;border-radius:6px;background:var(--slate-100);overflow:hidden;margin-top:12px;}
+.progress-fill{height:100%;background:var(--orange-500);border-radius:6px;transition:width .2s;}
+.progress-label{font-size:11.5px;color:var(--slate-600);margin-top:6px;}
+
+/* ---- inspect ---- */
+.job-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+.pallet-block{margin-top:18px;}
+.pallet-title{font-size:13px;font-weight:700;color:var(--navy-700);margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;}
+.pallet-title .n{background:var(--navy-800);color:#fff;width:22px;height:22px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-size:11.5px;}
+.item-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--slate-200);
+  border-left:4px solid var(--slate-200);border-radius:8px;padding:12px 14px;margin-bottom:8px;cursor:pointer;}
+.item-row.complete{border-left-color:var(--green-500);}
+.item-row.partial{border-left-color:var(--amber-500);}
+.item-row.defect{border-left-color:var(--red-500);}
+.item-row .idx{font-size:12px;color:var(--slate-400);font-weight:700;width:22px;flex:none;}
+.item-row .info{flex:1;min-width:0;}
+.item-row .pn{font-size:12.5px;color:var(--slate-600);font-family:monospace;}
+.item-row .desc{font-size:14px;font-weight:600;margin-top:1px;}
+.item-row .qty{font-size:12.5px;color:var(--slate-600);flex:none;text-align:right;}
+.item-row .qty b{color:var(--slate-800);font-size:14px;}
+.item-row .status-chip{flex:none;font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;}
+.chip-pending{background:var(--slate-100);color:var(--slate-600);}
+.chip-partial{background:var(--amber-100);color:var(--amber-500);}
+.chip-complete{background:var(--green-100);color:var(--green-500);}
+.chip-defect{background:var(--red-100);color:var(--red-500);}
+
+.submit-bar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--slate-200);
+  padding:14px 18px;margin:22px -18px -60px;display:flex;justify-content:space-between;align-items:center;
+  gap:16px;flex-wrap:wrap;}
+
+/* ---- modal ---- */
+.modal-overlay{position:fixed;inset:0;background:rgba(11,20,35,0.55);display:flex;align-items:flex-end;
+  justify-content:center;z-index:100;}
+@media(min-width:640px){.modal-overlay{align-items:center;}}
+.modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:520px;max-height:92vh;
+  overflow-y:auto;padding:20px 20px 24px;}
+@media(min-width:640px){.modal{border-radius:16px;}}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.modal-close{border:none;background:var(--slate-100);width:30px;height:30px;border-radius:50%;
+  font-size:16px;color:var(--slate-600);flex:none;}
+.photo-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;}
+.photo-tile{aspect-ratio:1;border:2px dashed var(--slate-200);border-radius:10px;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;gap:6px;background:var(--slate-50);
+  overflow:hidden;position:relative;text-align:center;padding:6px;}
+.photo-tile.filled{border-style:solid;border-color:var(--green-500);}
+.photo-tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.photo-tile .tag{position:relative;z-index:2;font-size:10.5px;font-weight:700;color:var(--slate-600);}
+.photo-tile.filled .tag{background:rgba(11,27,51,0.72);color:#fff;padding:3px 7px;border-radius:12px;}
+.photo-tile .picon{font-size:20px;color:var(--slate-400);}
+.pallet-final{background:#fff;border:1px dashed var(--slate-200);border-radius:8px;padding:12px 14px;
+  margin-top:6px;margin-bottom:14px;display:flex;align-items:center;gap:12px;}
+.pallet-final.filled{border-style:solid;border-color:var(--green-500);}
+.pallet-final .thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;flex:none;background:var(--slate-100);}
+.pallet-final .txt{flex:1;min-width:0;}
+.pallet-final .txt b{font-size:13.5px;}
+.pallet-final .txt div{font-size:12px;color:var(--slate-600);margin-top:2px;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding-top:16px;
+  border-top:1px solid var(--slate-200);}
+.toggle{width:42px;height:24px;border-radius:14px;background:var(--slate-200);position:relative;flex:none;border:none;}
+.toggle.on{background:var(--red-500);}
+.toggle .knob{width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;
+  transition:left .15s;}
+.toggle.on .knob{left:21px;}
+textarea, select.inp{width:100%;border:1px solid var(--slate-200);border-radius:8px;padding:9px 11px;font-size:13.5px;
+  font-family:inherit;resize:vertical;min-height:60px;margin-top:8px;}
+select.inp{min-height:auto;height:44px;background:#fff;}
+
+/* ---- approve ---- */
+.gate-banner{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:8px;font-size:13.5px;
+  font-weight:600;margin-top:14px;}
+.gate-ok{background:var(--green-100);color:var(--green-500);}
+.gate-bad{background:var(--red-100);color:var(--red-500);}
+.approve-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--slate-100);}
+.approve-item:last-child{border-bottom:none;}
+.approve-item .thumbs{display:flex;gap:6px;flex:none;}
+.approve-item .thumb{width:52px;height:52px;border-radius:7px;background:var(--slate-100);object-fit:cover;
+  border:1px solid var(--slate-200);}
+.approve-item .thumb.empty{display:flex;align-items:center;justify-content:center;font-size:10px;
+  color:var(--slate-400);text-align:center;}
+
+.empty-state{text-align:center;padding:50px 20px;color:var(--slate-600);}
+.empty-state .picon{font-size:36px;margin-bottom:10px;}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy-950);color:#fff;
+  padding:12px 20px;border-radius:8px;font-size:13.5px;font-weight:600;z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.2);}
+
+input[type=file]{display:none;}
+
+.camera-overlay{position:fixed;inset:0;background:#000;z-index:500;display:flex;flex-direction:column;}
+.camera-overlay video{flex:1;width:100%;object-fit:cover;background:#000;}
+.cam-top{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;
+  color:#fff;font-size:13.5px;font-weight:600;background:rgba(0,0,0,0.35);position:absolute;top:0;left:0;right:0;z-index:2;}
+.cam-close{border:none;background:rgba(255,255,255,0.15);color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;}
+.cam-bottom{position:absolute;bottom:0;left:0;right:0;padding:26px 0 34px;display:flex;justify-content:center;
+  background:linear-gradient(to top, rgba(0,0,0,0.5), transparent);}
+.cam-shutter{width:70px;height:70px;border-radius:50%;background:#fff;border:4px solid rgba(255,255,255,0.4);}
+.cam-shutter:active{background:var(--slate-200);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">A</div>
+    <div>
+      <div class="brand-word">AVIUS<span>ULD</span></div>
+      <div class="brand-sub">Packing QC Inspection</div>
+    </div>
+  </div>
+  <div class="role-switch" id="roleSwitch"></div>
+</div>
+<div class="subbar" id="subbar"></div>
+
+<div class="wrap">
+
+  <div class="view" id="view-upload">
+    <div class="card">
+      <div class="section-title">อัพโหลด Packing List</div>
+      <p class="muted" style="margin-bottom:14px;">โหลดไฟล์ Packing List ที่ได้รับจาก Production Supervisor — งาน Project เป็น Excel (.xlsx/.xlsm, อ่านชีต "Check list") หรืองาน Spare เป็น PDF (Packing Detail) — ระบบจะสร้าง Inspection Checklist ให้อัตโนมัติ</p>
+      <div class="dropzone" id="dropzone">
+        <div class="icon"><i class="picon">&#128194;</i></div>
+        <div class="dz-title" id="dzTitle">ลากไฟล์มาวาง หรือ แตะเพื่อเลือกไฟล์</div>
+        <div class="muted">รองรับ .xlsx / .xlsm (งาน Project) และ .pdf (งาน Spare)</div>
+        <input type="file" id="fileInput" accept=".xlsx,.xlsm,.xls,.pdf">
+      </div>
+      <div id="parseError" class="hidden" style="margin-top:12px;color:var(--red-500);font-size:13.5px;font-weight:600;"></div>
+    </div>
+
+    <div class="card hidden" id="previewCard">
+      <div class="section-title">ตรวจสอบข้อมูลก่อนสร้าง Checklist</div>
+      <h2 id="pvProject">-</h2>
+      <p class="muted" id="pvSub">-</p>
+      <div class="meta-grid" id="pvMeta"></div>
+      <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="createJobBtn">สร้าง Inspection Checklist</button>
+        <button class="btn btn-outline" id="cancelPreviewBtn">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-jobs">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <h2>งานตรวจสอบทั้งหมด</h2>
+    </div>
+    <div id="jobList"></div>
+  </div>
+
+  <div class="view" id="view-inspect">
+    <button class="btn btn-outline btn-sm" id="backToJobsFromInspect" style="margin-bottom:14px;">&larr; กลับหน้างานทั้งหมด</button>
+    <div class="card">
+      <div class="job-header">
+        <div>
+          <span class="badge" id="insBadge"></span>
+          <h2 style="margin-top:6px;" id="insProject">-</h2>
+          <p class="muted" id="insSub">-</p>
+        </div>
+        <div style="text-align:right;min-width:170px;">
+          <div class="progress-label" id="insProgressLabel">0 / 0 รายการครบ</div>
+          <div class="progress-bar" style="width:170px;"><div class="progress-fill" id="insProgressFill" style="width:0%;"></div></div>
+        </div>
+      </div>
+    </div>
+    <div id="palletContainer"></div>
+    <div class="card" id="clearanceCard">
+      <div class="section-title">ขั้นตอนสุดท้าย</div>
+      <div id="clearanceBlock"></div>
+    </div>
+    <div class="submit-bar">
+      <span class="muted" id="submitHint">ต้องถ่ายรูปครบ 2 รูปทุกรายการ (ยืนยันจำนวน + บรรจุลงกล่อง) ก่อน Submit</span>
+      <button class="btn btn-primary" id="submitJobBtn">Submit เพื่อขออนุมัติ</button>
+    </div>
+  </div>
+
+  <div class="view" id="view-approve">
+    <button class="btn btn-outline btn-sm" id="backToJobsFromApprove" style="margin-bottom:14px;">&larr; กลับหน้างานทั้งหมด</button>
+    <div class="card">
+      <div class="job-header">
+        <div>
+          <span class="badge" id="apBadge"></span>
+          <h2 style="margin-top:6px;" id="apProject">-</h2>
+          <p class="muted" id="apSub">-</p>
+        </div>
+      </div>
+      <div class="gate-banner" id="apGate"></div>
+      <button class="btn btn-outline btn-sm" id="apPdfBtn" style="margin-top:12px;">ดาวน์โหลด PDF รายงาน</button>
+    </div>
+    <div class="card" id="apItemsCard">
+      <div class="section-title">รายการตรวจสอบ</div>
+      <div id="apItems"></div>
+    </div>
+    <div class="card" id="apActionCard" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-primary" id="approveBtn">Approve</button>
+      <button class="btn btn-danger" id="rejectBtn">Reject</button>
+      <textarea id="rejectReason" class="hidden" placeholder="ระบุเหตุผลที่ Reject..." style="width:100%;margin-top:0;"></textarea>
+      <button class="btn btn-danger hidden btn-block" id="confirmRejectBtn">ยืนยัน Reject</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="itemModalRoot"></div>
+<div id="toastRoot"></div>
+
+<script>
+const EMPLOYEES = [
+  {id:'2118', name:'Mr. Chackkrit Inklad'},
+  {id:'2120', name:'Mr. Wisut Noree'},
+  {id:'2131', name:'Mr. Monwichit Sanngam'},
+  {id:'2171', name:'Mr. Natthapong Chantaet'},
+  {id:'2172', name:'Mr. Chinnuwat Pengwong'},
+  {id:'2173', name:'Ms. Sumalee Rangpeng'},
+  {id:'2176', name:'Mr. Chirayut Katkeaw'},
+  {id:'2217', name:'Ms. Kittima Nartkosol'},
+  {id:'2219', name:'Mr. Thawatchai Meesri'},
+  {id:'2258', name:'Mr. Samak Keawlong'},
+  {id:'2289', name:'Thanakrit Chaithet'}
+];
+
+const ROLES = [
+  {id:'admin', label:'QC Admin', tabs:['upload','jobs']},
+  {id:'engineer', label:'QC Engineer', tabs:['upload','jobs','approve']},
+  {id:'manager', label:'QC Manager', tabs:['upload','jobs','approve']},
+  {id:'operator', label:'QC Operator', tabs:['jobs','inspect']}
+];
+const TAB_LABEL = {upload:'อัพโหลด Packing List', jobs:'งานทั้งหมด', inspect:'ตรวจสอบ (iPad)', approve:'อนุมัติ'};
+
+const state = {
+  role:'manager',
+  view:'upload',
+  jobs:[],
+  activeJobId:null,
+  activeItemId:null,
+  parsedDraft:null
+};
+
+function uid(prefix){ return prefix+'_'+Math.random().toString(36).slice(2,9); }
+
+/* ---------------- PARSING ---------------- */
+function normCell(v){
+  if(v===null||v===undefined) return '';
+  return String(v).trim();
+}
+
+function findLabelValue(rows, keywords, maxRows){
+  maxRows = maxRows || rows.length;
+  for(let r=0; r<Math.min(maxRows, rows.length); r++){
+    const row = rows[r] || [];
+    for(let c=0; c<row.length; c++){
+      const cell = normCell(row[c]).toLowerCase();
+      if(!cell) continue;
+      for(const kw of keywords){
+        if(cell.startsWith(kw)){
+          for(let c2=c+1; c2<Math.min(row.length,c+6); c2++){
+            const v = normCell(row[c2]);
+            if(v) return v;
+          }
+        }
+      }
+    }
+  }
+  return '';
+}
+
+function parseChecklistSheet(rows, loose){
+  let headerRowIdx = -1, itemCol=-1, descCol=-1, qtyCol=-1;
+  for(let r=0; r<rows.length; r++){
+    const row = rows[r] || [];
+    let iCol=-1,dCol=-1,qCol=-1;
+    for(let c=0;c<row.length;c++){
+      const cell = normCell(row[c]).toLowerCase();
+      if(!loose){
+        if(/^item$/.test(cell)) iCol=c;
+        else if(/^description/.test(cell)) dCol=c;
+        else if(cell.includes('order') && cell.includes('qty')) qCol=c;
+      } else {
+        if(iCol<0 && (cell.includes('item') || cell.includes('part no') || cell.includes('p/n') || cell.includes('รายการ'))) iCol=c;
+        if(dCol<0 && (cell.includes('desc') || cell.includes('รายละเอียด'))) dCol=c;
+        if(qCol<0 && (cell.includes('qty') || cell.includes('quantity') || cell.includes('จำนวน'))) qCol=c;
+      }
+    }
+    if(iCol>=0 && dCol>=0 && iCol!==dCol){
+      headerRowIdx=r; itemCol=iCol; descCol=dCol; qtyCol=(qCol>=0?qCol:-1);
+      break;
+    }
+  }
+  if(headerRowIdx===-1) return null;
+
+  const items=[];
+  let dataStart = headerRowIdx+1;
+  if(rows[dataStart]){
+    const rowText = rows[dataStart].map(normCell).join(' ').toLowerCase();
+    if(/[ก-๙]/.test(rowText)) dataStart = headerRowIdx+2;
+  }
+  for(let r=dataStart; r<rows.length; r++){
+    const row = rows[r]||[];
+    const itemVal = normCell(row[itemCol]);
+    const descVal = normCell(row[descCol]);
+    if(!itemVal && !descVal) continue;
+    if(/review/i.test(descVal) || /review/i.test(itemVal)) break;
+    if(!itemVal || !descVal) continue;
+    const qtyRaw = qtyCol>=0 ? normCell(row[qtyCol]) : '';
+    const qtyNum = parseFloat(qtyRaw.replace(/,/g,''));
+    items.push({
+      id: uid('it'),
+      partNo: itemVal,
+      description: descVal,
+      orderQty: isNaN(qtyNum)? qtyRaw : qtyNum,
+      photos:{partNo:null, qty:null, packed:null, defect:null},
+      hasDefect:false,
+      note:''
+    });
+  }
+  return items.length ? items : null;
+}
+
+function classifyChecklistSheets(sheetNames){
+  const numbered = sheetNames.filter(n=>/check\s*list\s*\(\d+\)/i.test(n));
+  if(numbered.length){
+    return numbered.sort((a,b)=>{
+      const na = parseInt(a.match(/\((\d+)\)/)[1],10);
+      const nb = parseInt(b.match(/\((\d+)\)/)[1],10);
+      return na-nb;
+    });
+  }
+  const bare = sheetNames.filter(n=>/^check\s*list\s*$/i.test(n.trim()));
+  if(bare.length) return bare;
+  return sheetNames.filter(n=>/check\s*list/i.test(n));
+}
+
+function setLabelForSheet(name, fallbackIdx){
+  const m = name.match(/\((\d+)\)/);
+  return 'Set '+(m? m[1] : (fallbackIdx+1));
+}
+
+function parseWorkbook(wb, fileName){
+  const targetSheets = classifyChecklistSheets(wb.SheetNames);
+  if(!targetSheets.length) return {error:'ไม่พบชีต "Check list" ในไฟล์นี้ กรุณาตรวจสอบไฟล์ หรือแจ้งผมเพื่อปรับการอ่านไฟล์'};
+
+  function runPass(loose){
+    const pallets = [];
+    let totalItems = 0;
+    targetSheets.forEach((name, idx)=>{
+      const ws = wb.Sheets[name];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
+      const items = parseChecklistSheet(rows, loose);
+      if(items){
+        items.forEach(it=>{ it.pallet = setLabelForSheet(name, idx); });
+        pallets.push({palletNo: setLabelForSheet(name, idx), items, finalPhoto:null});
+        totalItems += items.length;
+      }
+    });
+    return {pallets, totalItems};
+  }
+
+  let {pallets, totalItems} = runPass(false);
+  if(!totalItems){
+    const loosePass = runPass(true);
+    pallets = loosePass.pallets; totalItems = loosePass.totalItems;
+  }
+  if(!totalItems) return {error:'ไม่พบตาราง Checklist ในไฟล์นี้ (ต้องมีคอลัมน์ที่ระบุ Item/Part No. และ Description) กรุณาตรวจสอบไฟล์ หรือแจ้งผมเพื่อปรับการอ่านไฟล์'};
+
+  const firstSheetRows = XLSX.utils.sheet_to_json(wb.Sheets[targetSheets[0]], {header:1, defval:null, raw:false});
+  const projectNo = findLabelValue(firstSheetRows, ['project'], 12) || '-';
+  const itemsDesc = findLabelValue(firstSheetRows, ['items'], 12) || '-';
+  const qty = findLabelValue(firstSheetRows, ["q'ty","qty"], 12) || '-';
+  const shipMode = findLabelValue(firstSheetRows, ['ship mode'], 12) || '-';
+  const loadingWk = findLabelValue(firstSheetRows, ['loading date'], 12) || '-';
+
+  return {
+    fileName, projectNo, itemsDesc, qty, shipMode, loadingWk,
+    pallets, totalItems
+  };
+}
+
+/* ---------------- PDF PACKING LIST PARSING (Spare-parts template) ---------------- */
+// Column x-ranges calibrated against the fixed "PACKING DETAIL" (OBK001) template,
+// expressed on an 842pt-wide reference page (A4 landscape) and scaled per actual page width.
+const PDF_TEMPLATE_PAGE_W = 842;
+const PDF_COLS = [
+  {key:'po', x0:0,   x1:100},
+  {key:'dcn', x0:100, x1:150},
+  {key:'pos', x0:150, x1:168},
+  {key:'project', x0:168, x1:214},
+  {key:'item', x0:214, x1:298},
+  {key:'desc', x0:298, x1:398},
+  {key:'qty', x0:398, x1:428},
+  {key:'unit', x0:428, x1:447},
+  {key:'size', x0:447, x1:528},
+  {key:'weight', x0:528, x1:562},
+  {key:'wh', x0:562, x1:600},
+  {key:'remark', x0:690, x1:842}
+];
+function pdfBucketColumn(x){
+  for(const c of PDF_COLS){ if(x>=c.x0 && x<c.x1) return c.key; }
+  return null;
+}
+
+async function parsePDFFile(file){
+  if(typeof pdfjsLib === 'undefined'){
+    return {error:'ไม่สามารถโหลดตัวอ่าน PDF ได้ (เช็คการเชื่อมต่ออินเทอร์เน็ต) กรุณาลองใหม่อีกครั้ง'};
+  }
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+
+  const pallets = [];
+  let totalItems = 0;
+  let firstMeta = null;
+
+  for(let pageNum=1; pageNum<=pdf.numPages; pageNum++){
+    const page = await pdf.getPage(pageNum);
+    const viewport = page.getViewport({scale:1});
+    const scaleX = PDF_TEMPLATE_PAGE_W / viewport.width;
+    const content = await page.getTextContent();
+
+    const items = content.items
+      .map(it=>({str: it.str, x: it.transform[4]*scaleX, y: it.transform[5]}))
+      .filter(it=> it.str.trim().length>0);
+
+    items.sort((a,b)=> b.y - a.y || a.x - b.x);
+    const lines = [];
+    let cur = null;
+    for(const it of items){
+      if(!cur || Math.abs(cur.y - it.y) > 2){ cur = {y: it.y, items: []}; lines.push(cur); }
+      cur.items.push(it);
+    }
+    lines.forEach(l=> l.items.sort((a,b)=>a.x-b.x));
+
+    function findLineWithToken(tok){
+      return lines.find(l=> l.items.some(it=>it.str.trim()===tok));
+    }
+    function valueAfterLabel(labelTok){
+      const line = findLineWithToken(labelTok);
+      if(!line) return '';
+      const labelItem = line.items.find(it=>it.str.trim()===labelTok);
+      const rest = line.items.filter(it=> it.x > labelItem.x + 5 && it.str.trim()!==':');
+      return rest.map(it=>it.str).join(' ').trim();
+    }
+
+    const customer = valueAfterLabel('Customer');
+    const shipMode = valueAfterLabel('Mode');
+    let workweek = '';
+    const wwLine = findLineWithToken('week');
+    if(wwLine){
+      const nums = wwLine.items.filter(it=>/^\d+$/.test(it.str.trim()));
+      if(nums.length) workweek = nums[nums.length-1].str.trim();
+    }
+    const allText = items.map(it=>it.str).join(' ');
+    const spMatch = allText.match(/\b\d{4}\/\d{2}\b/);
+    const spNo = spMatch ? spMatch[0] : ('P'+pageNum);
+    const jobsMatch = allText.match(/20\d{6}[A-Za-z]+/);
+
+    if(!firstMeta){ firstMeta = {customer, shipMode, workweek, jobsNo: jobsMatch? jobsMatch[0] : file.name}; }
+
+    const headerLine = lines.find(l=> l.items.some(it=>it.str.trim()==='Description') && l.items.some(it=>it.str.trim()==='Item'));
+    const footerLine = lines.find(l=> l.items.some(it=>it.str.trim()==='Reviewer'));
+    if(!headerLine) continue;
+    const headerY = headerLine.y;
+    const footerY = footerLine ? footerLine.y : -Infinity;
+
+    const dataLines = lines.filter(l=> l.y < headerY-5 && l.y > footerY+5);
+
+    const pageItems = [];
+    dataLines.forEach(line=>{
+      const buckets = {};
+      line.items.forEach(it=>{
+        const key = pdfBucketColumn(it.x);
+        if(!key) return;
+        (buckets[key] = buckets[key]||[]).push(it.str);
+      });
+      const itemNo = (buckets.item||[]).join(' ').trim();
+      const desc = (buckets.desc||[]).join(' ').trim();
+      if(!itemNo || !desc) return;
+      const qtyRaw = (buckets.qty||[]).join(' ').trim();
+      const unitRaw = (buckets.unit||[]).join(' ').trim();
+      const qtyNum = parseFloat(qtyRaw.replace(/,/g,''));
+      pageItems.push({
+        id: uid('it'),
+        partNo: itemNo,
+        description: desc,
+        orderQty: unitRaw ? (qtyRaw+' '+unitRaw) : (isNaN(qtyNum)? qtyRaw : qtyNum),
+        photos:{partNo:null, qty:null, packed:null, defect:null},
+        hasDefect:false,
+        note:''
+      });
+    });
+
+    if(pageItems.length){
+      const label = 'SP '+spNo+(customer? ' - '+customer : '');
+      pageItems.forEach(it=> it.pallet = label);
+      pallets.push({palletNo: label, items: pageItems, finalPhoto:null});
+      totalItems += pageItems.length;
+    }
+  }
+
+  if(!totalItems){
+    return {error:'ไม่พบตารางรายการใน PDF นี้ (รูปแบบไม่ตรงกับ Template Packing Detail ที่รองรับ) กรุณาตรวจสอบไฟล์ หรือแจ้งผมเพื่อปรับการอ่านไฟล์'};
+  }
+
+  return {
+    fileName: file.name,
+    projectNo: (firstMeta && firstMeta.jobsNo) || file.name,
+    itemsDesc: 'Spare Parts (' + pallets.length + ' กล่อง/Boxes)',
+    qty: totalItems + ' items',
+    shipMode: (firstMeta && firstMeta.shipMode) || '-',
+    loadingWk: (firstMeta && firstMeta.workweek) ? ('WK '+firstMeta.workweek) : '-',
+    pallets, totalItems
+  };
+}
+
+/* ---------------- RENDER HELPERS ---------------- */
+function esc(s){ return String(s===undefined||s===null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function itemComplete(it){ return !!(it.photos.partNo && it.photos.qty && it.photos.packed && (!it.hasDefect || it.photos.defect)); }
+function itemStatus(it){
+  if(itemComplete(it)) return it.hasDefect ? 'defect' : 'complete';
+  if(it.photos.partNo || it.photos.qty || it.photos.packed) return 'partial';
+  return 'pending';
+}
+function jobAllItems(job){ return job.pallets.flatMap(p=>p.items); }
+function jobProgress(job){
+  const all = jobAllItems(job);
+  const done = all.filter(itemComplete).length;
+  return {done, total: all.length};
+}
+function jobDefectCount(job){ return jobAllItems(job).filter(i=>i.hasDefect).length; }
+function palletFinalPhotoDone(job){ return job.pallets.filter(p=>!!p.finalPhoto).length; }
+function jobFullyReady(job){
+  const {done,total} = jobProgress(job);
+  return total>0 && done===total && job.pallets.every(p=>!!p.finalPhoto) && !!job.clearancePhoto;
+}
+
+function badgeClass(status){
+  return {ready:'badge-ready', inspecting:'badge-inspecting', submitted:'badge-submitted',
+    approved:'badge-approved', rejected:'badge-rejected'}[status] || 'badge-ready';
+}
+function badgeLabel(status){
+  return {ready:'พร้อมตรวจ', inspecting:'กำลังตรวจ', submitted:'รอ Approve',
+    approved:'อนุมัติแล้ว', rejected:'ถูกตีกลับ'}[status] || status;
+}
+
+function showToast(msg){
+  const root = document.getElementById('toastRoot');
+  root.innerHTML = '<div class="toast">'+esc(msg)+'</div>';
+  setTimeout(()=>{ root.innerHTML=''; }, 2600);
+}
+
+/* ---------------- CAMERA CAPTURE (live, no gallery picker) ---------------- */
+function openCameraCapture(onCapture, title){
+  const overlay = document.createElement('div');
+  overlay.className = 'camera-overlay';
+  overlay.innerHTML =
+    '<div class="cam-top"><span>'+esc(title||'ถ่ายรูป')+'</span><button class="cam-close" id="camCloseBtn">&times;</button></div>'+
+    '<video id="camVideo" autoplay playsinline muted></video>'+
+    '<div class="cam-bottom"><button class="cam-shutter" id="camShutterBtn"></button></div>';
+  document.body.appendChild(overlay);
+
+  const video = overlay.querySelector('#camVideo');
+  let stream = null;
+
+  function cleanup(){
+    if(stream){ stream.getTracks().forEach(t=>t.stop()); }
+    overlay.remove();
+  }
+
+  overlay.querySelector('#camCloseBtn').onclick = cleanup;
+
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    showToast('เบราว์เซอร์นี้ไม่รองรับการเปิดกล้อง กรุณาใช้ Safari/Chrome เวอร์ชันล่าสุด');
+    cleanup();
+    return;
+  }
+
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false})
+    .then(s=>{ stream = s; video.srcObject = s; })
+    .catch(()=>{
+      showToast('ไม่สามารถเข้าถึงกล้องได้ กรุณาอนุญาตการใช้งานกล้องในเบราว์เซอร์ (Settings > Safari > Camera)');
+      cleanup();
+    });
+
+  overlay.querySelector('#camShutterBtn').onclick = ()=>{
+    if(!video.videoWidth){ return; }
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+    cleanup();
+    onCapture(dataUrl);
+  };
+}
+
+/* ---------------- PDF EXPORT ---------------- */
+function imgFormat(dataUrl){
+  if(!dataUrl) return 'JPEG';
+  return dataUrl.indexOf('image/png')>=0 ? 'PNG' : 'JPEG';
+}
+
+function generatePDF(job){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'mm', format:'a4'});
+  const pageW = 210, pageH = 297, margin = 14;
+  let y = margin;
+
+  function drawHeader(){
+    doc.setFillColor(51,56,60);
+    doc.rect(0,0,pageW,18,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(14);
+    doc.setFont(undefined,'bold');
+    doc.text('AVIUS ULD', margin, 12);
+    doc.setFontSize(9);
+    doc.setFont(undefined,'normal');
+    doc.text('Packing QC Inspection Report', pageW-margin, 12, {align:'right'});
+    doc.setTextColor(20,20,20);
+    y = 26;
+  }
+
+  drawHeader();
+  const {done,total} = jobProgress(job);
+  const defects = jobDefectCount(job);
+
+  doc.setFontSize(13); doc.setFont(undefined,'bold');
+  doc.text('Project: '+String(job.projectNo), margin, y); y+=6;
+  doc.setFontSize(9); doc.setFont(undefined,'normal');
+  doc.text('Items: '+String(job.itemsDesc), margin, y); y+=5;
+  doc.text("Q'TY: "+String(job.qty)+'   Ship mode: '+String(job.shipMode)+'   Loading: '+String(job.loadingWk), margin, y); y+=5;
+  doc.text('Source file: '+String(job.fileName), margin, y); y+=5;
+  if(job.inspectorName){ doc.text('Inspector: '+String(job.inspectorName), margin, y); y+=5; }
+  doc.text('Status: '+badgeLabel(job.status)+'   Verified: '+done+' / '+total+' items   Defects found: '+defects, margin, y); y+=5;
+  if(job.submittedAt) { doc.text('Submitted: '+job.submittedAt.toLocaleString('th-TH'), margin, y); y+=5; }
+  if(job.approvedBy) { doc.text((job.status==='rejected'?'Rejected by: ':'Approved by: ')+job.approvedBy+'   on '+job.approvedAt.toLocaleString('th-TH'), margin, y); y+=5; }
+  if(job.status==='rejected' && job.rejectReason){ doc.text('Reject reason: '+job.rejectReason, margin, y, {maxWidth:pageW-2*margin}); y+=6; }
+  y += 4;
+
+  if(job.clearancePhoto){
+    if(y+26 > pageH-margin){ doc.addPage(); drawHeader(); }
+    try{ doc.addImage(job.clearancePhoto, imgFormat(job.clearancePhoto), margin, y, 22, 22); }catch(e){}
+    doc.setFontSize(9); doc.setFont(undefined,'bold');
+    doc.text('Pack Area Clearance Photo', margin+26, y+9);
+    doc.setFont(undefined,'normal');
+    doc.setFontSize(8);
+    doc.text('Confirms no leftover parts in the packing area after completion', margin+26, y+14);
+    y += 28;
+  }
+
+  job.pallets.forEach(p=>{
+    if(y > pageH-40){ doc.addPage(); drawHeader(); }
+    doc.setFontSize(10.5); doc.setFont(undefined,'bold');
+    doc.setDrawColor(230); doc.setFillColor(244,246,249);
+    doc.rect(margin, y-4.5, pageW-2*margin, 7, 'F');
+    doc.text(p.palletNo+'  ('+p.items.length+' items)', margin+2, y);
+    y += 8;
+    doc.setFont(undefined,'normal');
+
+    if(p.finalPhoto){
+      if(y+24 > pageH-margin){ doc.addPage(); drawHeader(); }
+      try{ doc.addImage(p.finalPhoto, imgFormat(p.finalPhoto), margin, y, 22, 22); }catch(e){}
+      doc.setFontSize(8); doc.setFont(undefined,'bold');
+      doc.text('Final Package Photo - '+p.palletNo, margin+26, y+11);
+      doc.setFont(undefined,'normal');
+      y += 26;
+    }
+
+    p.items.forEach((it,idx)=>{
+      const rowH = 20;
+      if(y+rowH > pageH-margin){ doc.addPage(); drawHeader(); }
+      let x = margin;
+      ['partNo','qty','packed','defect'].forEach(k=>{
+        if(it.photos[k]){
+          try{ doc.addImage(it.photos[k], imgFormat(it.photos[k]), x, y, 14, 14); }catch(e){}
+        } else if(k!=='defect'){
+          doc.setDrawColor(200); doc.rect(x,y,14,14);
+        }
+        x += 16;
+      });
+      doc.setFontSize(8); doc.setFont(undefined,'bold');
+      doc.text((idx+1)+'. '+String(it.partNo), x, y+4);
+      doc.setFont(undefined,'normal');
+      doc.text(String(it.description), x, y+8.5, {maxWidth: pageW-x-margin});
+      doc.text('Order qty: '+String(it.orderQty), x, y+13, {maxWidth: pageW-x-margin});
+      if(it.hasDefect){
+        doc.setTextColor(180,40,30);
+        doc.text('DEFECT: '+String(it.note||'-'), x, y+17.5, {maxWidth: pageW-x-margin});
+        doc.setTextColor(20,20,20);
+      }
+      doc.setDrawColor(235);
+      doc.line(margin, y+rowH-2, pageW-margin, y+rowH-2);
+      y += rowH+2;
+    });
+    y += 3;
+  });
+
+  doc.save('AviusULD_QC_'+String(job.projectNo)+'.pdf');
+}
+
+/* ---------------- RENDER: TOP NAV ---------------- */
+function renderTopNav(){
+  const rs = document.getElementById('roleSwitch');
+  rs.innerHTML = ROLES.map(r=>
+    '<button class="role-btn '+(state.role===r.id?'active':'')+'" data-role="'+r.id+'">'+esc(r.label)+'</button>'
+  ).join('');
+  rs.querySelectorAll('[data-role]').forEach(b=>b.onclick=()=>{
+    state.role = b.dataset.role;
+    const roleDef = ROLES.find(r=>r.id===state.role);
+    if(!roleDef.tabs.includes(state.view)) state.view = roleDef.tabs[0];
+    render();
+  });
+
+  const roleDef = ROLES.find(r=>r.id===state.role);
+  const sb = document.getElementById('subbar');
+  sb.innerHTML = roleDef.tabs.map(t=>
+    '<button class="tab-btn '+(state.view===t?'active':'')+'" data-tab="'+t+'">'+esc(TAB_LABEL[t])+'</button>'
+  ).join('');
+  sb.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
+    state.view = b.dataset.tab; render();
+  });
+}
+
+/* ---------------- RENDER: VIEWS SWITCH ---------------- */
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+}
+
+/* ---------------- UPLOAD VIEW ---------------- */
+function initUploadHandlers(){
+  const dz = document.getElementById('dropzone');
+  const input = document.getElementById('fileInput');
+  dz.onclick = ()=>input.click();
+  dz.ondragover = e=>{ e.preventDefault(); dz.classList.add('drag'); };
+  dz.ondragleave = ()=> dz.classList.remove('drag');
+  dz.ondrop = e=>{
+    e.preventDefault(); dz.classList.remove('drag');
+    if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  };
+  input.onchange = e=>{ if(e.target.files.length) handleFile(e.target.files[0]); };
+
+  document.getElementById('createJobBtn').onclick = ()=>{
+    const d = state.parsedDraft;
+    if(!d) return;
+    const job = {
+      id: uid('job'),
+      fileName: d.fileName,
+      projectNo: d.projectNo,
+      itemsDesc: d.itemsDesc,
+      qty: d.qty,
+      shipMode: d.shipMode,
+      loadingWk: d.loadingWk,
+      pallets: d.pallets,
+      status: 'ready',
+      createdBy: ROLES.find(r=>r.id===state.role).label,
+      createdAt: new Date(),
+      submittedAt:null, approvedBy:null, approvedAt:null, rejectReason:null,
+      inspectorName:null, clearancePhoto:null
+    };
+    state.jobs.unshift(job);
+    state.parsedDraft = null;
+    document.getElementById('previewCard').classList.add('hidden');
+    document.getElementById('fileInput').value = '';
+    document.getElementById('dzTitle').textContent = 'ลากไฟล์มาวาง หรือ แตะเพื่อเลือกไฟล์';
+    state.view = 'jobs';
+    showToast('สร้าง Inspection Checklist สำเร็จ: '+job.projectNo);
+    render();
+  };
+  document.getElementById('cancelPreviewBtn').onclick = ()=>{
+    state.parsedDraft = null;
+    document.getElementById('previewCard').classList.add('hidden');
+  };
+}
+
+function handleFile(file){
+  const errBox = document.getElementById('parseError');
+  errBox.classList.add('hidden');
+  document.getElementById('previewCard').classList.add('hidden');
+  document.getElementById('dzTitle').textContent = 'กำลังอ่านไฟล์ '+file.name+' ...';
+
+  if(/\.pdf$/i.test(file.name)){
+    parsePDFFile(file).then(result=>{
+      document.getElementById('dzTitle').textContent = file.name;
+      if(result.error){
+        errBox.textContent = result.error;
+        errBox.classList.remove('hidden');
+        return;
+      }
+      state.parsedDraft = result;
+      renderPreview(result);
+    }).catch(err=>{
+      document.getElementById('dzTitle').textContent = file.name;
+      errBox.textContent = 'ไม่สามารถอ่านไฟล์ PDF นี้ได้ ('+err.message+')';
+      errBox.classList.remove('hidden');
+    });
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const result = parseWorkbook(wb, file.name);
+      document.getElementById('dzTitle').textContent = file.name;
+      if(result.error){
+        errBox.textContent = result.error;
+        errBox.classList.remove('hidden');
+        return;
+      }
+      state.parsedDraft = result;
+      renderPreview(result);
+    }catch(err){
+      errBox.textContent = 'ไม่สามารถอ่านไฟล์นี้ได้ ('+err.message+') กรุณาตรวจสอบว่าเป็นไฟล์ Excel ที่ถูกต้อง';
+      errBox.classList.remove('hidden');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderPreview(d){
+  document.getElementById('pvProject').textContent = 'Project: '+d.projectNo;
+  document.getElementById('pvSub').textContent = d.fileName;
+  document.getElementById('pvMeta').innerHTML = [
+    ['ITEMS', d.itemsDesc], ["Q'TY", d.qty], ['SHIP MODE', d.shipMode],
+    ['LOADING WK', d.loadingWk], ['จำนวนพาเลท', d.pallets.length+' พาเลท'],
+    ['จำนวนรายการตรวจ', d.totalItems+' รายการ']
+  ].map(([l,v])=>'<div class="meta-item"><div class="label">'+esc(l)+'</div><div class="val">'+esc(v)+'</div></div>').join('');
+  document.getElementById('previewCard').classList.remove('hidden');
+}
+
+/* ---------------- JOBS VIEW ---------------- */
+function renderJobs(){
+  const list = document.getElementById('jobList');
+  const roleDef = ROLES.find(r=>r.id===state.role);
+  const visibleJobs = state.jobs;
+  if(!visibleJobs.length){
+    list.innerHTML = '<div class="card empty-state"><div class="picon">&#128230;</div>'+
+      '<p><b>ยังไม่มีงานตรวจสอบ</b></p><p class="muted" style="margin-top:4px;">'+
+      (roleDef.tabs.includes('upload') ? 'เริ่มจากอัพโหลด Packing List ในแท็บ "อัพโหลด"' : 'รอ QC Admin / Engineer / Manager สร้าง Checklist')+
+      '</p></div>';
+    return;
+  }
+  list.innerHTML = '<div class="job-grid">'+visibleJobs.map(job=>{
+    const {done,total} = jobProgress(job);
+    const pct = total? Math.round(done/total*100):0;
+    const defects = jobDefectCount(job);
+    return '<div class="job-card" data-job="'+job.id+'">'+
+      '<div class="top"><div><h3>'+esc(job.projectNo)+'</h3>'+
+      '<div class="sub">'+esc(job.itemsDesc)+'</div></div>'+
+      '<span class="badge '+badgeClass(job.status)+'">'+badgeLabel(job.status)+'</span></div>'+
+      '<div class="sub">'+job.pallets.length+' พาเลท &middot; '+total+' รายการ'+(defects?' &middot; <span style="color:var(--red-500);font-weight:700;">'+defects+' Defect</span>':'')+'</div>'+
+      (job.inspectorName ? '<div class="sub">ผู้ตรวจ: <b>'+esc(job.inspectorName)+'</b></div>' : '')+
+      '<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%;"></div></div>'+
+      '<div class="progress-label">'+done+' / '+total+' รายการถ่ายรูปครบ ('+pct+'%)</div>'+
+      (job.status!=='ready' ? '<button class="btn btn-outline btn-sm" data-pdf="'+job.id+'" style="margin-top:10px;">ดาวน์โหลด PDF</button>' : '')+
+      '</div>';
+  }).join('')+'</div>';
+
+  list.querySelectorAll('[data-pdf]').forEach(btn=>btn.onclick=(e)=>{
+    e.stopPropagation();
+    const job = state.jobs.find(j=>j.id===btn.dataset.pdf);
+    if(job) generatePDF(job);
+  });
+
+  list.querySelectorAll('[data-job]').forEach(card=>card.onclick=()=>{
+    state.activeJobId = card.dataset.job;
+    const job = state.jobs.find(j=>j.id===state.activeJobId);
+    if(state.role==='operator'){
+      if(!job.inspectorName){ openInspectorModal(job.id); return; }
+      if(job.status==='ready') job.status='inspecting';
+      state.view='inspect';
+    } else if(job.status==='submitted' || job.status==='approved' || job.status==='rejected'){
+      state.view='approve';
+    } else {
+      state.view='inspect';
+    }
+    render();
+  });
+}
+
+function openInspectorModal(jobId){
+  const job = state.jobs.find(j=>j.id===jobId);
+  const root = document.getElementById('itemModalRoot');
+  root.innerHTML =
+    '<div class="modal-overlay" id="inspOverlay">'+
+      '<div class="modal">'+
+        '<div class="modal-head"><div><h3>เลือกชื่อผู้ตรวจ</h3>'+
+        '<div class="muted" style="margin-top:4px;">Project: '+esc(job.projectNo)+'</div></div>'+
+        '<button class="modal-close" id="inspClose">&times;</button></div>'+
+        '<select class="inp" id="inspectorSelect">'+
+          '<option value="">-- เลือกชื่อ --</option>'+
+          EMPLOYEES.map(e=>'<option value="'+esc(e.name)+'">'+esc(e.name)+' ('+esc(e.id)+')</option>').join('')+
+        '</select>'+
+        '<button class="btn btn-primary btn-block" id="inspConfirm" style="margin-top:16px;">เริ่มตรวจงาน</button>'+
+      '</div>'+
+    '</div>';
+  document.getElementById('inspClose').onclick = ()=>{ root.innerHTML=''; };
+  document.getElementById('inspOverlay').onclick = e=>{ if(e.target.id==='inspOverlay') root.innerHTML=''; };
+  document.getElementById('inspConfirm').onclick = ()=>{
+    const val = document.getElementById('inspectorSelect').value;
+    if(!val){ showToast('กรุณาเลือกชื่อผู้ตรวจก่อนเริ่มงาน'); return; }
+    job.inspectorName = val;
+    if(job.status==='ready') job.status='inspecting';
+    root.innerHTML = '';
+    state.activeJobId = job.id;
+    state.view = 'inspect';
+    render();
+  };
+}
+
+/* ---------------- INSPECT VIEW ---------------- */
+function renderInspect(){
+  const job = state.jobs.find(j=>j.id===state.activeJobId);
+  if(!job){ state.view='jobs'; return render(); }
+  document.getElementById('insBadge').className = 'badge '+badgeClass(job.status);
+  document.getElementById('insBadge').textContent = badgeLabel(job.status);
+  document.getElementById('insProject').textContent = job.projectNo;
+  document.getElementById('insSub').innerHTML = esc(job.itemsDesc+' | '+job.fileName)+
+    (job.inspectorName ? '<br>ผู้ตรวจ: <b>'+esc(job.inspectorName)+'</b> <a href="#" id="changeInspector" style="color:var(--orange-500);font-weight:600;">(เปลี่ยน)</a>' : '');
+
+  const {done,total} = jobProgress(job);
+  const pct = total? Math.round(done/total*100):0;
+  document.getElementById('insProgressLabel').textContent = done+' / '+total+' รายการครบ';
+  document.getElementById('insProgressFill').style.width = pct+'%';
+
+  const changeLink = document.getElementById('changeInspector');
+  if(changeLink) changeLink.onclick = (e)=>{ e.preventDefault(); openInspectorModal(job.id); };
+
+  const container = document.getElementById('palletContainer');
+  container.innerHTML = job.pallets.map(p=>{
+    const rowsHtml = p.items.map((it,idx)=>{
+      const st = itemStatus(it);
+      const chipLabel = {pending:'ยังไม่ตรวจ',partial:'ถ่ายรูปบางส่วน',complete:'ครบถ้วน',defect:'พบ Defect'}[st];
+      return '<div class="item-row '+st+'" data-item="'+it.id+'">'+
+        '<div class="idx">'+(idx+1)+'</div>'+
+        '<div class="info"><div class="pn">'+esc(it.partNo)+'</div><div class="desc">'+esc(it.description)+'</div></div>'+
+        '<div class="qty">จำนวน<br><b>'+esc(it.orderQty)+'</b></div>'+
+        '<div class="status-chip chip-'+st+'">'+chipLabel+'</div>'+
+        '</div>';
+    }).join('');
+    const finalDone = !!p.finalPhoto;
+    const finalBlock = '<div class="pallet-final '+(finalDone?'filled':'')+'" data-final="'+esc(p.palletNo)+'">'+
+      (finalDone ? '<img class="thumb" src="'+p.finalPhoto+'">' : '<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--slate-400);">&#128247;</div>')+
+      '<div class="txt"><b>รูป Final Package ของพาเลทนี้</b><div>'+(finalDone? 'ถ่ายแล้ว &middot; แตะเพื่อถ่ายใหม่' : 'บังคับถ่าย 1 รูปหลังบรรจุครบทั้งพาเลท')+'</div></div>'+
+      '</div>';
+    return '<div class="pallet-block"><div class="pallet-title"><span class="n">'+esc(p.palletNo)+'</span> พาเลทที่ '+esc(p.palletNo)+' &middot; '+p.items.length+' รายการ</div>'+rowsHtml+finalBlock+'</div>';
+  }).join('');
+
+  container.querySelectorAll('[data-item]').forEach(row=>row.onclick=()=>{
+    state.activeItemId = row.dataset.item;
+    openItemModal();
+  });
+
+  container.querySelectorAll('[data-final]').forEach(el=>el.onclick=()=>{
+    const palletNo = el.dataset.final;
+    openCameraCapture(dataUrl=>{
+      const pallet = job.pallets.find(pp=>pp.palletNo===palletNo);
+      if(pallet){ pallet.finalPhoto = dataUrl; }
+      renderInspect();
+    }, 'รูป Final Package - '+palletNo);
+  });
+
+  const allPalletsDone = job.pallets.every(p=>!!p.finalPhoto) && total>0 && done===total;
+  const clearanceBlock = document.getElementById('clearanceBlock');
+  if(!allPalletsDone){
+    document.getElementById('clearanceCard').classList.add('hidden');
+  } else {
+    document.getElementById('clearanceCard').classList.remove('hidden');
+    const cDone = !!job.clearancePhoto;
+    clearanceBlock.innerHTML = '<div class="pallet-final '+(cDone?'filled':'')+'" id="clearanceTile">'+
+      (cDone ? '<img class="thumb" src="'+job.clearancePhoto+'">' : '<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--slate-400);">&#128247;</div>')+
+      '<div class="txt"><b>รูป Clearance พื้นที่ Pack งาน</b><div>'+(cDone? 'ถ่ายแล้ว &middot; แตะเพื่อถ่ายใหม่' : 'ถ่ายยืนยันว่าไม่มีชิ้นงานตกค้างในพื้นที่ Pack (บังคับก่อน Submit)')+'</div></div>'+
+      '</div>';
+    document.getElementById('clearanceTile').onclick = ()=>{
+      openCameraCapture(dataUrl=>{
+        job.clearancePhoto = dataUrl;
+        renderInspect();
+      }, 'รูป Clearance พื้นที่ Pack งาน');
+    };
+  }
+
+  const submitBtn = document.getElementById('submitJobBtn');
+  const canSubmit = jobFullyReady(job) && job.status!=='approved';
+  submitBtn.disabled = !canSubmit;
+  submitBtn.style.opacity = canSubmit ? '1':'0.45';
+  submitBtn.style.cursor = canSubmit? 'pointer':'not-allowed';
+  submitBtn.textContent = job.status==='submitted' ? 'ส่งขออนุมัติแล้ว รอ QC Engineer/Manager' :
+    (job.status==='approved' ? 'งานนี้ได้รับการ Approve แล้ว' : 'Submit เพื่อขออนุมัติ');
+  submitBtn.onclick = ()=>{
+    if(!canSubmit) return;
+    job.status = 'submitted';
+    job.submittedAt = new Date();
+    showToast('ส่งงาน '+job.projectNo+' เพื่อขออนุมัติแล้ว');
+    state.view='jobs';
+    render();
+  };
+  if(job.status==='submitted' || job.status==='approved') submitBtn.disabled = true;
+  const hint = document.getElementById('submitHint');
+  const palletsLeft = job.pallets.filter(p=>!p.finalPhoto).length;
+  if(palletsLeft>0){
+    hint.textContent = 'ต้องถ่ายรูปครบทุกรายการ (Part No. + จำนวน + บรรจุลงกล่อง) และรูป Final Package ทุกพาเลท (เหลืออีก '+palletsLeft+' พาเลท) ก่อน Submit';
+  } else if(!job.clearancePhoto){
+    hint.textContent = 'เหลือขั้นตอนสุดท้าย: ถ่ายรูป Clearance พื้นที่ Pack งาน ก่อน Submit';
+  } else {
+    hint.textContent = 'ครบทุกขั้นตอนแล้ว พร้อม Submit';
+  }
+}
+
+function openItemModal(){
+  const job = state.jobs.find(j=>j.id===state.activeJobId);
+  const it = jobAllItems(job).find(i=>i.id===state.activeItemId);
+  if(!it) return;
+  const root = document.getElementById('itemModalRoot');
+
+  function tile(key, label){
+    const val = it.photos[key];
+    return '<div class="photo-tile '+(val?'filled':'')+'" data-shot="'+key+'">'+
+      (val? '<img src="'+val+'">' : '<div class="picon">&#128247;</div>')+
+      '<div class="tag">'+label+'</div></div>';
+  }
+
+  root.innerHTML =
+    '<div class="modal-overlay" id="modalOverlay">'+
+      '<div class="modal">'+
+        '<div class="modal-head"><div>'+
+          '<div class="muted" style="font-family:monospace;">'+esc(it.partNo)+'</div>'+
+          '<h3 style="margin-top:2px;">'+esc(it.description)+'</h3>'+
+          '<div class="muted" style="margin-top:4px;">จำนวนที่ต้องบรรจุ: <b>'+esc(it.orderQty)+'</b></div>'+
+        '</div><button class="modal-close" id="closeModal">&times;</button></div>'+
+
+        '<div class="section-title">รูปถ่ายยืนยัน (บังคับทั้ง 3 รูป)</div>'+
+        '<div class="photo-grid">'+tile('partNo','ยืนยัน Part No.')+tile('qty','ยืนยันจำนวน')+tile('packed','บรรจุลงกล่องแล้ว')+'</div>'+
+
+        '<div class="toggle-row"><div>'+
+          '<div style="font-weight:700;font-size:14px;">พบ Defect</div>'+
+          '<div class="muted">เปิดเพื่อบันทึกภาพและหมายเหตุ Defect</div>'+
+        '</div><button class="toggle '+(it.hasDefect?'on':'')+'" id="defectToggle"><div class="knob"></div></button></div>'+
+
+        '<div id="defectSection" class="'+(it.hasDefect?'':'hidden')+'" style="margin-top:12px;">'+
+          '<div class="photo-grid" style="grid-template-columns:1fr;">'+tile('defect','รูป Defect')+'</div>'+
+          '<textarea id="defectNote" placeholder="ระบุรายละเอียด Defect...">'+esc(it.note)+'</textarea>'+
+        '</div>'+
+
+        '<button class="btn btn-primary btn-block" id="saveItemBtn" style="margin-top:18px;">บันทึกและปิด</button>'+
+      '</div>'+
+    '</div>';
+
+  document.getElementById('closeModal').onclick = closeItemModal;
+  document.getElementById('modalOverlay').onclick = e=>{ if(e.target.id==='modalOverlay') closeItemModal(); };
+
+  const shotLabels = {partNo:'ถ่ายรูป Part No.', qty:'ถ่ายรูปยืนยันจำนวน', packed:'ถ่ายรูปบรรจุลงกล่อง', defect:'ถ่ายรูป Defect'};
+  root.querySelectorAll('[data-shot]').forEach(t=>t.onclick=()=>{
+    const key = t.dataset.shot;
+    openCameraCapture(dataUrl=>{
+      it.photos[key] = dataUrl;
+      openItemModal();
+    }, shotLabels[key]);
+  });
+
+  document.getElementById('defectToggle').onclick = ()=>{
+    it.hasDefect = !it.hasDefect;
+    openItemModal();
+  };
+  const noteEl = document.getElementById('defectNote');
+  if(noteEl) noteEl.oninput = e=>{ it.note = e.target.value; };
+
+  document.getElementById('saveItemBtn').onclick = ()=>{
+    if(it.hasDefect && !it.photos.defect){
+      showToast('กรุณาถ่ายรูป Defect ก่อนบันทึก');
+      return;
+    }
+    if(!it.photos.partNo || !it.photos.qty || !it.photos.packed){
+      showToast('กรุณาถ่ายรูป Part No. / ยืนยันจำนวน / บรรจุลงกล่อง ให้ครบทั้ง 3 รูปก่อนบันทึก');
+      return;
+    }
+    closeItemModal();
+    render();
+  };
+}
+function closeItemModal(){
+  document.getElementById('itemModalRoot').innerHTML='';
+  state.activeItemId = null;
+}
+
+/* ---------------- APPROVE VIEW ---------------- */
+function renderApprove(){
+  const job = state.jobs.find(j=>j.id===state.activeJobId);
+  if(!job){ state.view='jobs'; return render(); }
+  document.getElementById('apBadge').className = 'badge '+badgeClass(job.status);
+  document.getElementById('apBadge').textContent = badgeLabel(job.status);
+  document.getElementById('apProject').textContent = job.projectNo;
+  document.getElementById('apSub').textContent = job.itemsDesc+' | '+job.pallets.length+' พาเลท'+
+    (job.inspectorName? ' | ผู้ตรวจ: '+job.inspectorName : ' | ส่งโดย QC Operator');
+
+  const {done,total} = jobProgress(job);
+  const palletsLeft = job.pallets.filter(p=>!p.finalPhoto).length;
+  const allDone = jobFullyReady(job);
+  const gate = document.getElementById('apGate');
+  if(allDone){
+    gate.className = 'gate-banner gate-ok';
+    gate.innerHTML = '<i class="picon">&#9989;</i> ครบทุกรายการ ('+total+'/'+total+') รูป Final Package ครบทุกพาเลท และมีรูป Clearance พื้นที่แล้ว พร้อม Approve';
+  } else {
+    gate.className = 'gate-banner gate-bad';
+    gate.innerHTML = '<i class="picon">&#9888;&#65039;</i> ยังไม่ครบ: รายการ '+done+'/'+total+
+      (palletsLeft>0? ' &middot; ขาดรูป Final Package อีก '+palletsLeft+' พาเลท' : '')+
+      (!job.clearancePhoto? ' &middot; ยังไม่มีรูป Clearance พื้นที่ Pack งาน' : '')+
+      ' &mdash; ไม่สามารถ Approve ได้จนกว่าจะครบ';
+  }
+
+  document.getElementById('apPdfBtn').onclick = ()=> generatePDF(job);
+
+  const apItems = document.getElementById('apItems');
+  function thumb(it,key,label){
+    const v = it.photos[key];
+    return v ? '<img class="thumb" src="'+v+'" title="'+label+'">' :
+      '<div class="thumb empty">ไม่มี'+(key==='defect'?'':'<br>'+label)+'</div>';
+  }
+  const clearanceRow = '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:2px solid var(--slate-100);">'+
+    (job.clearancePhoto
+      ? '<img class="thumb" src="'+job.clearancePhoto+'" style="width:70px;height:70px;">'
+      : '<div class="thumb empty" style="width:70px;height:70px;">ไม่มี<br>Clearance</div>')+
+    '<div><div style="font-weight:700;font-size:13.5px;">รูป Clearance พื้นที่ Pack งาน</div>'+
+    '<div class="muted" style="margin-top:2px;">ถ่ายหลังบรรจุครบทุกพาเลท ยืนยันไม่มีของเหลือในพื้นที่</div></div></div>';
+  apItems.innerHTML = clearanceRow + job.pallets.map(p=>{
+    const finalThumb = p.finalPhoto
+      ? '<img class="thumb" src="'+p.finalPhoto+'" style="width:70px;height:70px;">'
+      : '<div class="thumb empty" style="width:70px;height:70px;">ไม่มี<br>Final Photo</div>';
+    const palletHead = '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:2px solid var(--slate-100);">'+
+      finalThumb+'<div><div style="font-weight:700;font-size:13.5px;">'+esc(p.palletNo)+' &middot; รูป Final Package</div>'+
+      '<div class="muted" style="margin-top:2px;">'+p.items.length+' รายการในพาเลทนี้</div></div></div>';
+    const itemsHtml = p.items.map(it=>{
+      return '<div class="approve-item"><div class="thumbs">'+thumb(it,'partNo','Part No.')+thumb(it,'qty','จำนวน')+thumb(it,'packed','บรรจุ')+
+        (it.hasDefect? thumb(it,'defect','Defect') : '')+'</div>'+
+        '<div style="flex:1;min-width:0;"><div class="pn" style="font-family:monospace;font-size:12px;color:var(--slate-600);">'+esc(it.partNo)+'</div>'+
+        '<div style="font-weight:600;font-size:13.5px;">'+esc(it.description)+'</div>'+
+        (it.hasDefect? '<div style="color:var(--red-500);font-size:12.5px;font-weight:700;margin-top:2px;">Defect: '+esc(it.note||'-')+'</div>':'')+
+        '</div></div>';
+    }).join('');
+    return palletHead+itemsHtml;
+  }).join('');
+
+  const approveBtn = document.getElementById('approveBtn');
+  const rejectBtn = document.getElementById('rejectBtn');
+  const confirmRejectBtn = document.getElementById('confirmRejectBtn');
+  const rejectReason = document.getElementById('rejectReason');
+  const actionCard = document.getElementById('apActionCard');
+
+  rejectReason.classList.add('hidden');
+  confirmRejectBtn.classList.add('hidden');
+
+  if(job.status==='approved'){
+    actionCard.innerHTML = '<div class="gate-banner gate-ok" style="margin-top:0;width:100%;">'+
+      '<i class="picon">&#9989;</i> Approved โดย '+esc(job.approvedBy)+' เมื่อ '+job.approvedAt.toLocaleString('th-TH')+'</div>';
+    return;
+  }
+  if(job.status==='rejected'){
+    actionCard.innerHTML = '<div class="gate-banner gate-bad" style="margin-top:0;width:100%;">'+
+      '<i class="picon">&#10060;</i> Reject โดย '+esc(job.approvedBy)+': '+esc(job.rejectReason)+'</div>';
+    return;
+  }
+
+  approveBtn.disabled = !allDone;
+  approveBtn.style.opacity = allDone?'1':'0.45';
+  approveBtn.onclick = ()=>{
+    if(!allDone) return;
+    job.status='approved';
+    job.approvedBy = ROLES.find(r=>r.id===state.role).label;
+    job.approvedAt = new Date();
+    showToast('Approve งาน '+job.projectNo+' เรียบร้อย');
+    state.view='jobs';
+    render();
+  };
+  rejectBtn.onclick = ()=>{
+    rejectReason.classList.remove('hidden');
+    confirmRejectBtn.classList.remove('hidden');
+  };
+  confirmRejectBtn.onclick = ()=>{
+    if(!rejectReason.value.trim()){ showToast('กรุณาระบุเหตุผลที่ Reject'); return; }
+    job.status='rejected';
+    job.rejectReason = rejectReason.value.trim();
+    job.approvedBy = ROLES.find(r=>r.id===state.role).label;
+    job.approvedAt = new Date();
+    showToast('Reject งาน '+job.projectNo+' แล้ว ส่งกลับให้ QC Operator แก้ไข');
+    state.view='jobs';
+    render();
+  };
+}
+
+/* ---------------- MAIN RENDER ---------------- */
+function render(){
+  renderTopNav();
+  showView(state.view);
+  if(state.view==='upload') { /* static, handlers bound once */ }
+  if(state.view==='jobs') renderJobs();
+  if(state.view==='inspect') renderInspect();
+  if(state.view==='approve') renderApprove();
+}
+
+document.getElementById('backToJobsFromInspect').onclick = ()=>{ state.view='jobs'; render(); };
+document.getElementById('backToJobsFromApprove').onclick = ()=>{ state.view='jobs'; render(); };
+
+initUploadHandlers();
+render();
+</script>
+</body>
+</html>
